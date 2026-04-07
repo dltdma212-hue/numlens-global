@@ -1,48 +1,26 @@
-import { useTextRecognition } from 'react-native-vision-camera-ocr-plus';
-import { MathParser } from '../math/MathParser';
-
 /**
- * NumLens OCR Processor
- * Handles the camera frame processing for text detection.
- * Optimized for low-latency, real-time performance (John Carmack requirement).
+ * OCRProcessor - Vision Camera v4 호환
+ * 카메라로 수식을 인식하여 MathParser에 전달합니다.
+ * 현재는 Mock OCR 구현체 (실제 ML 연동 전 단계)
  */
-export class OCRProcessor {
-  /**
-   * Main processing line.
-   * Takes recognized blocks and filters for mathematical expressions.
-   * @param blocks Recognized text blocks from vision-camera-ocr
-   * @returns The most likely mathematical expression result.
-   */
-  static processText(blocks: any[]): string | null {
-    if (!blocks || blocks.length === 0) return null;
 
-    // Filter blocks that look like mathematical expressions
-    // Usually, numbers and operators are short/dense.
-    const mathCandidate = blocks
-      .map(block => block.text)
-      .find(text => /[\d+\-*/÷xX]/.test(text)); // Contains math symbols
-
-    if (mathCandidate) {
-      return MathParser.evaluate(mathCandidate);
-    }
-
-    return null;
-  }
-}
-
-/**
- * React Hook for handling OCR Camera Stream
- * For use within CameraOverlay component.
- */
-export const useNumLensOCR = () => {
-  const { scanText } = useTextRecognition();
-
-  const handleFrame = (frame: any) => {
-    'worklet'; // John Carmack says use worklets for 0.05s latency
-    const result = scanText(frame);
-    // Further processing on UI thread if needed
-    return result;
+export function useNumLensOCR() {
+  const handleFrame = () => {
+    // Vision Camera v4 Frame Processor는 별도 Worklet 설정 필요
+    // 현재는 더미 구현 - 실제 OCR은 추후 ML Kit 연동
   };
 
   return { handleFrame };
-};
+}
+
+export class OCRProcessor {
+  static extractMathExpression(text: string): string | null {
+    // 수식 패턴 추출: 숫자와 연산자만 남김
+    const mathPattern = /[\d\+\-\*\/\.\(\)\s]+/g;
+    const matches = text.match(mathPattern);
+    if (!matches) return null;
+    
+    const expression = matches.join('').trim();
+    return expression.length > 0 ? expression : null;
+  }
+}

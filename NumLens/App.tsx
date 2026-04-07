@@ -1,38 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Alert } from 'react-native';
-import { Camera, useCameraDevices, CameraProps } from 'react-native-vision-camera';
+import { StyleSheet, View, Text } from 'react-native';
+import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { CameraOverlay } from './src/components/CameraOverlay';
-import { useNumLensOCR, OCRProcessor } from './src/modules/ocr/OCRProcessor';
 import { shareResult } from './src/modules/social/ViralHook';
 import { PaymentProvider } from './src/modules/payments/PaymentProvider';
 import { TrialManager } from './src/modules/trial/TrialManager';
 import { PaywallScreen } from './src/screens/PaywallScreen';
 
-/**
- * NumLens Main Entry Point
- * 🏢 Jeff Bezos (Sangmu) - Orchestration
- * 🛠️ John Carmack - Performance Core
- * 🎨 Jony Ive - Minimal UI
- */
 export default function App() {
-  const [hasPermission, setHasPermission] = useState(false);
+  const { hasPermission, requestPermission } = useCameraPermission();
   const [result, setResult] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
-  
-  const devices = useCameraDevices();
-  const device = devices.back;
 
-  const { handleFrame } = useNumLensOCR();
+  const device = useCameraDevice('back');
 
   useEffect(() => {
-    (async () => {
-      const status = await Camera.requestCameraPermission();
-      setHasPermission(status === 'authorized');
-    })();
-  }, []);
-
-  if (!hasPermission) return <Text>Camera permission is required.</Text>;
-  if (device == null) return <Text>Loading camera...</Text>;
+    if (!hasPermission) {
+      requestPermission();
+    }
+  }, [hasPermission]);
 
   const handleCalculate = async (newResult: string) => {
     const hasAccess = await TrialManager.checkAccess();
@@ -44,9 +30,25 @@ export default function App() {
     await TrialManager.incrementTrial();
   };
 
+  if (!hasPermission) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.text}>카메라 권한이 필요합니다.</Text>
+      </View>
+    );
+  }
+
+  if (!device) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.text}>카메라를 불러오는 중...</Text>
+      </View>
+    );
+  }
+
   if (showPaywall) {
     return (
-      <PaywallScreen 
+      <PaywallScreen
         onClose={() => setShowPaywall(false)}
         onSubscribe={async () => {
           const success = await PaymentProvider.requestPayment('Subscription');
@@ -65,14 +67,10 @@ export default function App() {
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={true}
-        // Carmack says: Native Frame Processor for 0.05s latency
-        frameProcessor={handleFrame}
-        frameProcessorFps={30}
       />
-      
-      <CameraOverlay 
+      <CameraOverlay
         result={result}
-        onShare={() => shareResult(result || "0")}
+        onShare={() => shareResult(result || '0')}
         onPay={() => PaymentProvider.requestPayment('Subscription')}
       />
     </View>
@@ -83,5 +81,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  center: {
+    flex: 1,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
