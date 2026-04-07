@@ -8,6 +8,9 @@ build/
 # OS Files
 .DS_Store
 Thumbs.db
+gh*
+gh.zip
+gh_2.49.0_macOS_amd64/
 
 # Environment Variables
 .env
