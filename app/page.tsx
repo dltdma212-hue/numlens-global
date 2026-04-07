@@ -89,7 +89,7 @@ export default function LandingPage() {
             <div>
                <LucideGlobe className="w-8 h-8 mx-auto text-blue-500 mb-4" />
                <h3 className="font-bold text-lg mb-2">복잡한 양식 완벽 대응</h3>
-               <p className="text-white/50 text-sm">물류 송장, 주식 차트, 수기가 섞인 장부 등 현장의 문서를 이해합니다.</p>
+               <p className="text-white/50 text-sm">물류 송장, 영수증, 수기가 섞인 장부 등 현장의 문서를 이해합니다.</p>
             </div>
          </div>
       </section>
