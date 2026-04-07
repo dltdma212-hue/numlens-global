@@ -1,0 +1,14 @@
+{
+  "name": "antigravity-numlens-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "app:dev": "cd NumLens && npm start",
+    "app:build-apk": "cd NumLens && eas build -p android --profile preview",
+    "web:dev": "cd web && npm run dev",
+    "web:build": "cd web && npm run build",
+    "deploy:all": "npm run web:build && npm run app:build-apk"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

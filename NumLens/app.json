@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "NumLens",
+    "slug": "numlens",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.antigravity.numlens",
+      "infoPlist": {
+        "NSCameraUsageDescription": "NumLens requires camera access to recognize and calculate numbers in real-time. All processing is done on-device for privacy.",
+        "NSPhotoLibraryAddUsageDescription": "Required to share your calculation results with friends."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.antigravity.numlens",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "NumLens requires access to your camera to solve math problems."
+        }
+      ]
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.expo/
+.next/
+dist/
+build/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Expo specific
+package-lock.json
+yarn-error.log
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
