@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
-import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
+import { Camera, useCameraDevice, useCameraPermission, useFrameProcessor } from 'react-native-vision-camera';
+import { useTextRecognition } from 'react-native-vision-camera-text-recognition';
+import { runOnJS } from 'react-native-reanimated';
 import { CameraOverlay } from './src/components/CameraOverlay';
 import { HighlightOverlay } from './src/components/HighlightOverlay';
 import { EditModal } from './src/components/EditModal';
@@ -21,6 +23,9 @@ export default function App() {
   const [sumMode, setSumMode] = useState<SumMode>('vertical');
   const [selectedBlock, setSelectedBlock] = useState<OCRBlock | null>(null);
 
+  // Edit Mode Flag: 수동 수정 모달이 팝업되면 카메라 실시간 업데이트를 일시중단함.
+  const isEditing = !!selectedBlock;
+
   const device = useCameraDevice('back');
 
   useEffect(() => {
@@ -28,6 +33,27 @@ export default function App() {
       requestPermission();
     }
   }, [hasPermission]);
+
+  // Google ML Kit Text Recognition Hook (Latin 랭귀지 지정으로 한글 배제, 숫자 초정밀 타게팅)
+  const { scanText } = useTextRecognition({ language: 'latin' });
+
+  // 메인 UI 쓰레드로 데이터 쏘기
+  const handleRecognizedData = (data: any) => {
+    if (isEditing) return; // 수정 중일 때 결과 교란 방지
+
+    const blocks = data?.blocks || [];
+    const parsedBlocks = OCRProcessor.processBlocks(blocks, sumMode);
+    
+    setOcrBlocks(parsedBlocks);
+    setResult(OCRProcessor.calculateTotalSum(parsedBlocks).toString());
+  };
+
+  // 백그라운드 프레임 프로세서 (매 60fps 마다 On-Device 연산)
+  const frameProcessor = useFrameProcessor((frame) => {
+    'worklet';
+    const textData = scanText(frame);
+    runOnJS(handleRecognizedData)(textData);
+  }, [scanText, isEditing, sumMode]);
 
   const handleCalculate = async (newResult: string) => {
     const hasAccess = await TrialManager.checkAccess();
@@ -95,8 +121,9 @@ export default function App() {
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
+        isActive={!isEditing} // 수정 중에는 카메라 프레임 홀드
         torch={torch}
+        frameProcessor={frameProcessor}
       />
       <HighlightOverlay 
         blocks={ocrBlocks}
