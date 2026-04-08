@@ -1,12 +1,15 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { tokens } from '../theme/tokens';
-import { LucideCamera, LucideShare2, LucideCreditCard, LucideFlashlight, LucideFlashlightOff } from 'lucide-react-native';
+import { LucideCamera, LucideShare2, LucideCreditCard, LucideFlashlight, LucideFlashlightOff, ArrowDownCircle, ArrowRightCircle } from 'lucide-react-native';
+import { SumMode } from '../modules/ocr/OCRProcessor';
 
 interface CameraOverlayProps {
   result: string | null;
   torch: 'on' | 'off';
+  sumMode: SumMode;
   onToggleTorch: () => void;
+  onToggleSumMode: () => void;
   onShare: () => void;
   onPay: () => void;
 }
@@ -16,7 +19,7 @@ interface CameraOverlayProps {
  * Design Philosophy: Jony Ive Minimalist / Glassmorphism
  * Only essential elements. Floating results.
  */
-export const CameraOverlay: React.FC<CameraOverlayProps> = ({ result, torch, onToggleTorch, onShare, onPay }) => {
+export const CameraOverlay: React.FC<CameraOverlayProps> = ({ result, torch, sumMode, onToggleTorch, onToggleSumMode, onShare, onPay }) => {
   return (
     <View style={styles.container}>
       {/* Top Bar for Monetization/Profile/Utility */}
@@ -52,8 +55,24 @@ export const CameraOverlay: React.FC<CameraOverlayProps> = ({ result, torch, onT
 
       {/* Bottom Bar: Action Capture (GaryVee) */}
       <View style={styles.bottomBar}>
+        
+        {/* Toggle Mode Button (Horizontal vs Vertical Sum) */}
+        <TouchableOpacity onPress={onToggleSumMode} style={styles.toggleModeButton}>
+           {sumMode === 'vertical' ? (
+              <>
+                 <ArrowDownCircle color="#FFCC00" size={24} />
+                 <Text style={styles.toggleModeText}>⬇️ 세로(열) 강제더하기</Text>
+              </>
+           ) : (
+              <>
+                 <ArrowRightCircle color="#FFCC00" size={24} />
+                 <Text style={styles.toggleModeText}>➡️ 가로(행) 강제더하기</Text>
+              </>
+           )}
+        </TouchableOpacity>
+
         <View style={styles.shutterRing}>
-           <LucideCamera color={tokens.colors.white} size={32} />
+           <LucideCamera color="#000000" size={32} />
         </View>
       </View>
     </View>
@@ -136,5 +155,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
+  },
+  toggleModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(30,30,30,0.9)',
+    borderWidth: 2,
+    borderColor: '#555',
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginBottom: 20,
+    gap: 8,
+  },
+  toggleModeText: {
+    color: '#FFCC00',
+    fontSize: 16,
+    fontWeight: 'bold',
   }
 });

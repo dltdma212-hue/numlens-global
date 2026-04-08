@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { CameraOverlay } from './src/components/CameraOverlay';
+import { HighlightOverlay } from './src/components/HighlightOverlay';
+import { OCRBlock, SumMode, OCRProcessor } from './src/modules/ocr/OCRProcessor';
 import { shareResult } from './src/modules/social/ViralHook';
 import { PaymentProvider } from './src/modules/payments/PaymentProvider';
 import { TrialManager } from './src/modules/trial/TrialManager';
@@ -12,6 +14,10 @@ export default function App() {
   const [result, setResult] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [torch, setTorch] = useState<'on' | 'off'>('off');
+  
+  // OCR Tracking States
+  const [ocrBlocks, setOcrBlocks] = useState<OCRBlock[]>([]);
+  const [sumMode, setSumMode] = useState<SumMode>('vertical');
 
   const device = useCameraDevice('back');
 
@@ -62,6 +68,11 @@ export default function App() {
     );
   }
 
+  const handleBlockTouch = (block: OCRBlock) => {
+    // TODO: 미니 팝업 키패드 트리거 위치
+    console.log('Touched block:', block);
+  };
+
   return (
     <View style={styles.container}>
       <Camera
@@ -70,10 +81,16 @@ export default function App() {
         isActive={true}
         torch={torch}
       />
+      <HighlightOverlay 
+        blocks={ocrBlocks}
+        onBlockTouch={handleBlockTouch}
+      />
       <CameraOverlay
         result={result}
         torch={torch}
+        sumMode={sumMode}
         onToggleTorch={() => setTorch(t => t === 'on' ? 'off' : 'on')}
+        onToggleSumMode={() => setSumMode(m => m === 'vertical' ? 'horizontal' : 'vertical')}
         onShare={() => shareResult(result || '0')}
         onPay={() => PaymentProvider.requestPayment('Subscription')}
       />
