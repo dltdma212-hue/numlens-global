@@ -11,6 +11,7 @@ export default function App() {
   const { hasPermission, requestPermission } = useCameraPermission();
   const [result, setResult] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [torch, setTorch] = useState<'on' | 'off'>('off');
 
   const device = useCameraDevice('back');
 
@@ -67,9 +68,12 @@ export default function App() {
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={true}
+        torch={torch}
       />
       <CameraOverlay
         result={result}
+        torch={torch}
+        onToggleTorch={() => setTorch(t => t === 'on' ? 'off' : 'on')}
         onShare={() => shareResult(result || '0')}
         onPay={() => PaymentProvider.requestPayment('Subscription')}
       />
