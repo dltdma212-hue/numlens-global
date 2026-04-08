@@ -3,6 +3,7 @@ import { StyleSheet, View, Text } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { CameraOverlay } from './src/components/CameraOverlay';
 import { HighlightOverlay } from './src/components/HighlightOverlay';
+import { EditModal } from './src/components/EditModal';
 import { OCRBlock, SumMode, OCRProcessor } from './src/modules/ocr/OCRProcessor';
 import { shareResult } from './src/modules/social/ViralHook';
 import { PaymentProvider } from './src/modules/payments/PaymentProvider';
@@ -18,6 +19,7 @@ export default function App() {
   // OCR Tracking States
   const [ocrBlocks, setOcrBlocks] = useState<OCRBlock[]>([]);
   const [sumMode, setSumMode] = useState<SumMode>('vertical');
+  const [selectedBlock, setSelectedBlock] = useState<OCRBlock | null>(null);
 
   const device = useCameraDevice('back');
 
@@ -69,8 +71,23 @@ export default function App() {
   }
 
   const handleBlockTouch = (block: OCRBlock) => {
-    // TODO: 미니 팝업 키패드 트리거 위치
-    console.log('Touched block:', block);
+    setSelectedBlock(block); // 해당 형광펜 블록을 누르면 모달 띄움
+  };
+
+  const handleSaveEdit = (newText: string) => {
+    if (selectedBlock) {
+      // 강제 필터링 엔진을 한 번 태워서 넣음
+      const { value } = OCRProcessor.cleanAndExtractValue(newText);
+      const updatedValue = value || 0;
+      
+      setOcrBlocks(prev => 
+        prev.map(b => b.id === selectedBlock.id 
+          ? { ...b, text: newText, value: updatedValue, isUncertain: false } // 수정한 것은 확신(certain) 처리
+          : b
+        )
+      );
+    }
+    setSelectedBlock(null);
   };
 
   return (
@@ -93,6 +110,13 @@ export default function App() {
         onToggleSumMode={() => setSumMode(m => m === 'vertical' ? 'horizontal' : 'vertical')}
         onShare={() => shareResult(result || '0')}
         onPay={() => PaymentProvider.requestPayment('Subscription')}
+      />
+      
+      <EditModal
+        visible={!!selectedBlock}
+        block={selectedBlock}
+        onSave={handleSaveEdit}
+        onClose={() => setSelectedBlock(null)}
       />
     </View>
   );
