@@ -19,6 +19,7 @@
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-reanimated": "~3.16.1",
+    "react-native-svg": "15.12.1",
     "react-native-vision-camera": "^4.7.3",
     "react-native-vision-camera-text-recognition": "^3.1.1",
     "react-native-worklets-core": "^1.6.3"
