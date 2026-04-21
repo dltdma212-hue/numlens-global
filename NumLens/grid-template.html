@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NumLens 기본 표 생성기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Noto Sans KR', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+    }
+
+    /* ── 컨트롤 패널 ── */
+    .control-panel {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 800;
+      color: #00FFCC;
+      letter-spacing: -0.5px;
+    }
+    .brand span { color: #fff; }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 6px 14px;
+    }
+    .control-group label {
+      font-size: 13px;
+      color: #8b949e;
+      white-space: nowrap;
+    }
+    .control-group input {
+      width: 60px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #00FFCC;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      padding: 4px 6px;
+      outline: none;
+    }
+    .control-group input:focus { border-color: #00FFCC; }
+
+    .btn {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: #00FFCC; color: #000; }
+    .btn-primary:hover { background: #00e5b5; transform: translateY(-1px); }
+    .btn-secondary { background: #238636; color: #fff; }
+    .btn-secondary:hover { background: #2ea043; transform: translateY(-1px); }
+    .btn-danger { background: #da3633; color: #fff; }
+    .btn-danger:hover { background: #f85149; transform: translateY(-1px); }
+
+    /* ── 표 영역 ── */
+    .grid-wrapper {
+      padding: 24px;
+      overflow: auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      background: #fff;
+      border: 2px solid #000;
+      min-width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #555;
+      min-width: 80px;
+      height: 34px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 13px;
+      padding: 4px 6px;
+    }
+
+    /* 열 헤더 행 (첫 번째 행) */
+    thead th {
+      background: #2d2d2d;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      border: 1px solid #000;
+      min-width: 100px;
+    }
+
+    /* 행 번호 열 (첫 번째 셀) */
+    tbody td:first-child {
+      background: #f5f5f5;
+      color: #333;
+      font-weight: 700;
+      border: 1px solid #000;
+      min-width: 50px;
+      width: 50px;
+    }
+
+    /* 데이터 셀 */
+    tbody td:not(:first-child) {
+      background: #fff;
+      color: #000;
+      border: 1px solid #aaa;
+    }
+
+    /* 마지막 행 (합계 행) */
+    tfoot td {
+      background: #fffde7;
+      color: #000;
+      font-weight: 700;
+      border: 1px solid #888;
+      border-top: 2px solid #000;
+    }
+    tfoot td:first-child {
+      background: #f0f0c8;
+    }
+
+    /* ── 인쇄 ── */
+    @media print {
+      .control-panel { display: none; }
+      body { background: #fff; }
+      .grid-wrapper { padding: 0; }
+      table { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="control-panel">
+  <div class="brand">Num<span>Lens</span> 📋 표 생성기</div>
+
+  <div class="control-group">
+    <label>가로 줄 (행)</label>
+    <input type="number" id="rowCount" value="31" min="1" max="100" />
+  </div>
+
+  <div class="control-group">
+    <label>세로 칸 (열)</label>
+    <input type="number" id="colCount" value="5" min="1" max="30" />
+  </div>
+
+  <button class="btn btn-primary" onclick="buildTable()">🔄 표 재생성</button>
+  <button class="btn btn-secondary" onclick="window.print()">🖨 인쇄 / PDF 저장</button>
+  <button class="btn btn-danger" onclick="clearTable()">🗑 내용 지우기</button>
+</div>
+
+<div class="grid-wrapper">
+  <table id="mainTable"></table>
+</div>
+
+<script>
+  const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  function buildTable() {
+    const rows = Math.max(1, parseInt(document.getElementById('rowCount').value) || 31);
+    const cols = Math.max(1, parseInt(document.getElementById('colCount').value) || 5);
+    const table = document.getElementById('mainTable');
+    table.innerHTML = '';
+
+    // ── 헤더 행 ──
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    // 왼쪽 상단 빈 셀
+    const cornerTh = document.createElement('th');
+    cornerTh.textContent = '#';
+    headerRow.appendChild(cornerTh);
+
+    for (let c = 0; c < cols; c++) {
+      const th = document.createElement('th');
+      // A, B, C ... Z, AA, AB ...
+      th.textContent = colLabel(c);
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // ── 데이터 행 ──
+    const tbody = document.createElement('tbody');
+    for (let r = 0; r < rows; r++) {
+      const tr = document.createElement('tr');
+
+      // 행 번호 셀
+      const numTd = document.createElement('td');
+      numTd.textContent = r + 1;
+      tr.appendChild(numTd);
+
+      for (let c = 0; c < cols; c++) {
+        const td = document.createElement('td');
+        td.contentEditable = 'true';
+        td.id = `cell-${r}-${c}`;
+        td.addEventListener('keydown', handleKeyNav);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+
+    // ── 합계(계) 행 ──
+    const tfoot = document.createElement('tfoot');
+    const footRow = document.createElement('tr');
+
+    const footLabel = document.createElement('td');
+    footLabel.textContent = '계';
+    footRow.appendChild(footLabel);
+
+    for (let c = 0; c < cols; c++) {
+      const td = document.createElement('td');
+      td.id = `sum-${c}`;
+      td.style.cursor = 'pointer';
+      td.title = '클릭 시 합계 자동 계산';
+      td.addEventListener('click', () => calcColSum(c, rows));
+      td.textContent = '─';
+      footRow.appendChild(td);
+    }
+    tfoot.appendChild(footRow);
+    table.appendChild(tfoot);
+  }
+
+  function colLabel(index) {
+    if (index < 26) return ALPHA[index];
+    return ALPHA[Math.floor(index / 26) - 1] + ALPHA[index % 26];
+  }
+
+  // 열 합계 계산
+  function calcColSum(colIndex, rows) {
+    let total = 0;
+    for (let r = 0; r < rows; r++) {
+      const cell = document.getElementById(`cell-${r}-${colIndex}`);
+      if (cell) {
+        const val = parseFloat(cell.textContent.replace(/,/g, '')) || 0;
+        total += val;
+      }
+    }
+    const sumCell = document.getElementById(`sum-${colIndex}`);
+    if (sumCell) {
+      sumCell.textContent = total > 0 ? total.toLocaleString() : '0';
+      sumCell.style.color = total > 0 ? '#d32f2f' : '#555';
+    }
+  }
+
+  // 방향키로 셀 이동
+  function handleKeyNav(e) {
+    const [, r, c] = e.target.id.split('-').map(Number);
+    const rows = parseInt(document.getElementById('rowCount').value);
+    const cols = parseInt(document.getElementById('colCount').value);
+
+    let nr = r, nc = c;
+    if (e.key === 'ArrowUp') { nr = Math.max(0, r - 1); }
+    else if (e.key === 'ArrowDown' || e.key === 'Enter') { nr = Math.min(rows - 1, r + 1); }
+    else if (e.key === 'ArrowLeft' && e.target.textContent === '') { nc = Math.max(0, c - 1); }
+    else if (e.key === 'ArrowRight' && e.target.textContent === '') { nc = Math.min(cols - 1, c + 1); }
+    else if (e.key === 'Tab') { e.preventDefault(); nc = (c + 1) >= cols ? 0 : c + 1; if (nc === 0) nr = Math.min(rows - 1, r + 1); }
+    else { return; }
+
+    if (nr !== r || nc !== c) {
+      e.preventDefault();
+      const next = document.getElementById(`cell-${nr}-${nc}`);
+      if (next) next.focus();
+    }
+  }
+
+  function clearTable() {
+    const rows = parseInt(document.getElementById('rowCount').value);
+    const cols = parseInt(document.getElementById('colCount').value);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = document.getElementById(`cell-${r}-${c}`);
+        if (cell) cell.textContent = '';
+      }
+    }
+    for (let c = 0; c < cols; c++) {
+      const s = document.getElementById(`sum-${c}`);
+      if (s) { s.textContent = '─'; s.style.color = ''; }
+    }
+  }
+
+  // 최초 로드 시 표 생성
+  buildTable();
+</script>
+</body>
+</html>
